@@ -9,7 +9,7 @@
   "scripts": {
     "prebuild": "node -e \"const fs = require('fs'); const path = require('path'); const undiciFolderPath = path.join('node_modules', 'undici-types'); if (fs.existsSync(undiciFolderPath)) { try { console.log('Temporarily renaming undici-types directory...'); fs.renameSync(undiciFolderPath, path.join('node_modules', 'undici-types.bak')); console.log('Successfully renamed'); } catch (e) { console.error('Failed to rename undici-types', e); } }\"",
     "build": "tsc -p tsconfig.build.json",
-    "postbuild": "node -e \"const fs = require('fs'); const path = require('path'); const undiciBackupPath = path.join('node_modules', 'undici-types.bak'); if (fs.existsSync(undiciBackupPath)) { try { console.log('Restoring undici-types directory...'); fs.renameSync(undiciBackupPath, path.join('node_modules', 'undici-types')); console.log('Successfully restored'); } catch (e) { console.error('Failed to restore undici-types', e); } }\"",
+    "postbuild": "node -e \"const fs = require('fs'); const path = require('path'); const undiciBackupPath = path.join('node_modules', 'undici-types.bak'); if (fs.existsSync(undiciBackupPath)) { try { console.log('Restoring undici-types directory...'); fs.renameSync(undiciBackupPath, path.join('node_modules', 'undici-types')); console.log('Successfully restored'); } catch (e) { console.error('Failed to restore undici-types', e); } }\" && node scripts/prepare-wrangler.js",
     "dev": "ts-node src/server.ts",
     "start": "node dist/src/index.js",
     "test": "jest",
