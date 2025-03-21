@@ -2,7 +2,7 @@
   "name": "agentic-workflow-ts",
   "version": "1.0.0",
   "description": "Agentic Workflow System in TypeScript",
-  "main": "dist/src/server.js",
+  "main": "dist/src/index.js",
   "directories": {
     "test": "tests"
   },
@@ -11,16 +11,17 @@
     "build": "tsc -p tsconfig.build.json",
     "postbuild": "node -e \"const fs = require('fs'); const path = require('path'); const undiciBackupPath = path.join('node_modules', 'undici-types.bak'); if (fs.existsSync(undiciBackupPath)) { try { console.log('Restoring undici-types directory...'); fs.renameSync(undiciBackupPath, path.join('node_modules', 'undici-types')); console.log('Successfully restored'); } catch (e) { console.error('Failed to restore undici-types', e); } }\"",
     "dev": "ts-node src/server.ts",
-    "start": "node dist/server.js",
+    "start": "node dist/src/index.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "lint": "eslint . --ext .ts",
-    "deploy": "wrangler publish",
-    "deploy:dev": "wrangler publish --env development",
+    "deploy": "wrangler deploy",
+    "deploy:dev": "wrangler deploy --env development",
     "wrangler:dev": "wrangler dev",
     "clean": "rimraf dist",
-    "build:clean": "npm run clean && npm run build"
+    "build:clean": "npm run clean && npm run build",
+    "build:worker": "npm run build && cp wrangler.toml dist/"
   },
   "keywords": [
     "agentic",
