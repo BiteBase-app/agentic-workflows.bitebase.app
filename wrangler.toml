@@ -1,5 +1,5 @@
 name = "agentic-workflow"
-main = "dist/index.js"
+main = "dist/src/index.js" # Updated path to match actual build output
 compatibility_date = "2024-03-21"
 node_compat = true
 compatibility_flags = ["nodejs_compat"]
@@ -9,7 +9,7 @@ account_id = "dc95c232d76cc4df23a5ca452a4046ab"  # Your Cloudflare account ID
 zone_id = "1a5dd610e492ab9a1343bb2be936830d"     # Your Cloudflare zone ID if deploying to a custom domain
 
 [build]
-command = "npm run build"
+command = "npm run prebuild && npm run build" # Added prebuild step to handle undici-types
 
 # Use module format (ES modules) instead of service-worker format
 [build.upload]
@@ -29,4 +29,4 @@ name = "agentic-workflow-dev"
 vars = { NODE_ENV = "development" }
 
 [triggers]
-crons = ["*/30 * * * *"]  # Run every 30 minutes 
+crons = ["*/30 * * * *"]  # Run every 30 minutes
