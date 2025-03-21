@@ -1,0 +1,16 @@
+name: agentic-workflows.bitebase.app
+id: ari:cloud:compass:af971579-9853-4d1d-a13d-a7a4f19f0f21:component/a1f6db64-4f64-4c66-9241-99b0d67cac95/ef806c8f-8187-4cc2-b4da-6095ea60bbb9
+description: null
+configVersion: 1
+typeId: SERVICE
+fields:
+  tier: 4
+links:
+  - name: null
+    type: REPOSITORY
+    url: https://github.com/BiteBase-app/agentic-workflows.bitebase.app
+relationships:
+  DEPENDS_ON: []
+labels:
+  - source:github
+customFields: null
