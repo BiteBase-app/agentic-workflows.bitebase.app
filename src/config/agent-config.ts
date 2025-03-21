@@ -64,6 +64,7 @@ export interface AgentConfig {
   timeout: number;
   maxRetries: number;
   priority: PriorityLevel;
+  type: AgentType;
 }
 
 /**

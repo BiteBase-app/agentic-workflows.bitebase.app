@@ -82,4 +82,49 @@ While the build process is fixed, there are still test failures that need to be 
 2. Fix any missing implementations in the codebase that tests expect
 3. Improve test mocks to better simulate dependencies
 
-These test issues don't prevent the application from building and deploying, but they should be addressed to ensure proper code quality and reliable testing. 
+These test issues don't prevent the application from building and deploying, but they should be addressed to ensure proper code quality and reliable testing.
+
+# Build Summary: Migration Functionality
+
+## Overview
+
+Added functionality to migrate data from Neon PostgreSQL to Cloudflare D1 (SQLite) database. This enables seamless transition between database providers while preserving all workflow and analysis data.
+
+## Changes Made
+
+1. **Migration Script**:
+   - Created `scripts/migrate-neon-to-d1.js` for data migration
+   - Implemented step-by-step migration process:
+     - Connection to Neon PostgreSQL
+     - Data extraction and transformation
+     - SQL generation for D1 compatibility
+     - Import to Cloudflare D1
+     - Migration verification
+
+2. **Dependencies**:
+   - Added `pg` package (v8.11.3) for PostgreSQL connectivity
+   - Uses existing Node.js utilities for file operations and process execution
+
+3. **Documentation**:
+   - Added Migration section to README.md
+   - Included commands for both Bash and PowerShell environments
+   - Provided troubleshooting tips for common migration issues
+
+## Testing
+
+The build process completes successfully with the new migration capabilities.
+
+## Next Steps
+
+To complete the migration process:
+
+1. Test the migration script with real data
+2. Update configuration files if needed
+3. Document specific migration examples for users
+4. Consider adding data validation checks
+
+## Notes
+
+- The migration script requires the Wrangler CLI to be installed and authenticated
+- Migration is designed to be non-destructive to the source database
+- SQLite compatibility transformations are applied for JSON fields and date formats 

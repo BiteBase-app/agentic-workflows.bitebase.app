@@ -1,7 +1,8 @@
 name = "agentic-workflow"
-main = "./dist/src/server.js"
+main = "dist/index.js"
 compatibility_date = "2024-03-21"
 node_compat = true
+compatibility_flags = ["nodejs_compat"]
 
 workers_dev = true
 account_id = "dc95c232d76cc4df23a5ca452a4046ab"  # Your Cloudflare account ID
@@ -9,6 +10,10 @@ zone_id = "1a5dd610e492ab9a1343bb2be936830d"     # Your Cloudflare zone ID if de
 
 [build]
 command = "npm run build"
+
+# Use module format (ES modules) instead of service-worker format
+[build.upload]
+format = "modules"
 
 [vars]
 NODE_ENV = "production"

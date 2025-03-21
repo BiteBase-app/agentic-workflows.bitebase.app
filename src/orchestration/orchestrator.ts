@@ -17,12 +17,35 @@ export class AgentOrchestrator {
    * Create a new agent orchestrator
    */
   constructor(
-    config: OrchestrationConfig,
-    agents: Map<AgentType, BaseAgent>
+    config: Partial<OrchestrationConfig>,
+    agents: Map<AgentType, BaseAgent> = new Map()
   ) {
-    this.config = config;
+    // Apply default values for any missing config options
+    this.config = {
+      maxConcurrentAgents: config.maxConcurrentAgents || 5,
+      agentTimeout: config.agentTimeout || 30000,
+      maxRetries: config.maxRetries || 3,
+      resultAggregation: config.resultAggregation || ResultAggregationMethod.SIMPLE,
+      cacheEnabled: config.cacheEnabled !== undefined ? config.cacheEnabled : true,
+      cacheTTL: config.cacheTTL || 3600,
+      priorityEnabled: config.priorityEnabled !== undefined ? config.priorityEnabled : true,
+      analyzeByDefault: config.analyzeByDefault || []
+    };
     this.agents = agents;
     this.logger.info('Initializing agent orchestrator');
+  }
+
+  /**
+   * Register an agent with the orchestrator
+   */
+  registerAgent(agent: BaseAgent): void {
+    const agentConfig = agent.getConfig();
+    if (!agentConfig.type) {
+      this.logger.warn('Attempted to register agent without a type');
+      return;
+    }
+    this.agents.set(agentConfig.type, agent);
+    this.logger.info(`Registered agent of type ${agentConfig.type}`);
   }
 
   /**

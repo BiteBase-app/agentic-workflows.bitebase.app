@@ -22,4 +22,22 @@ declare namespace Express {
       bitebaseService?: any;
     };
   }
+}
+
+declare global {
+  // Add D1 database type for Cloudflare Workers
+  var DB: D1Database;
+  var ENV: any;
+  
+  // Express app with locals
+  namespace Express {
+    interface Application {
+      locals: {
+        orchestrator: any;
+        workflowRegistry: any;
+        dbService: any;
+        biteBaseService: any;
+      }
+    }
+  }
 } 

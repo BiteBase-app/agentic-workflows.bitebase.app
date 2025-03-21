@@ -450,4 +450,67 @@ export class MarketAgent extends BaseAgent {
 
 ## License
 
-[MIT License](LICENSE) 
+[MIT License](LICENSE)
+
+## Database Migration (Neon PostgreSQL to Cloudflare D1)
+
+This project supports migrating data from a Neon PostgreSQL database to Cloudflare D1 (SQLite). The migration script transfers all data from the following tables:
+
+- `workflow_executions`
+- `analysis_requests`
+- `agent_executions`
+
+### Prerequisites
+
+- Node.js installed
+- PostgreSQL client (`pg` npm package)
+- Wrangler CLI installed and authenticated with Cloudflare
+- Access to both the source Neon database and target D1 database
+
+### Running the Migration
+
+1. Set the Neon connection string as an environment variable:
+
+```bash
+# Bash/Linux/Mac
+export NEON_CONNECTION_STRING="postgresql://username:password@hostname:port/database"
+
+# Windows PowerShell
+$env:NEON_CONNECTION_STRING="postgresql://username:password@hostname:port/database"
+```
+
+2. Set the D1 database name (if different from the default):
+
+```bash
+# Bash/Linux/Mac
+export D1_DATABASE_NAME="your-d1-database-name"
+
+# Windows PowerShell
+$env:D1_DATABASE_NAME="your-d1-database-name"
+```
+
+3. Run the migration script:
+
+```bash
+node scripts/migrate-neon-to-d1.js
+```
+
+### Migration Process
+
+The script performs the following steps:
+
+1. Connects to the Neon PostgreSQL database
+2. Extracts all data from the relevant tables
+3. Transforms the data for SQLite compatibility (handling JSON fields, date formats, etc.)
+4. Generates SQL files for import into D1
+5. Imports the data into Cloudflare D1 using Wrangler
+6. Verifies the migration by counting rows in the target database
+
+### Troubleshooting
+
+If you encounter issues during migration:
+
+- Ensure your Neon connection string is correct and accessible
+- Verify that Wrangler is properly authenticated with Cloudflare
+- Check that the D1 database has been created and is properly configured
+- For large datasets, consider migrating tables individually to avoid timeouts 

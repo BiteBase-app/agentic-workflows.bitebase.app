@@ -54,6 +54,7 @@ const initializeAgents = async (env: Env) => {
       timeout: config.agent.timeout,
       maxRetries: config.agent.maxRetries,
       priority: PriorityLevel.MEDIUM,
+      type: AgentType.SENTIMENT
     });
     
     // Create agent map

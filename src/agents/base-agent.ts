@@ -83,6 +83,13 @@ export abstract class BaseAgent {
   }
 
   /**
+   * Get agent configuration
+   */
+  getConfig(): AgentConfig {
+    return this.config;
+  }
+
+  /**
    * Initialize agent resources
    */
   async initialize(): Promise<void> {

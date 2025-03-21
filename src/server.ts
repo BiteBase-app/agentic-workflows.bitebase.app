@@ -10,6 +10,8 @@ import { AgentOrchestrator } from './orchestration/orchestrator';
 import { CustomerSupportWorkflow } from './workflows/workflow';
 import path from 'path';
 import appModule from './app';
+import { DbService } from './services/db-service';
+import { BiteBaseService } from './services/bitebase-service';
 
 // Type definitions for Express route handlers
 type RouteHandler = (req: express.Request, res: express.Response, next?: express.NextFunction) => void | Promise<any>;
@@ -59,17 +61,18 @@ const initializeAgents = async () => {
     
     // Initialize sentiment agent
     const sentimentAgent = new SentimentAgent({
-      enabled: true,
+      type: AgentType.SENTIMENT,
       capabilities: [AgentCapability.SENTIMENT_ANALYSIS],
-      model: config.openai.model,
+      priority: PriorityLevel.MEDIUM,
+      enabled: true,
+      model: "gpt-4",
       temperature: 0.7,
       maxTokens: 2000,
       contextWindow: 16000,
       memoryEnabled: true,
       usesTools: true,
-      timeout: config.agent.timeout,
-      maxRetries: config.agent.maxRetries,
-      priority: PriorityLevel.MEDIUM,
+      timeout: 30000,
+      maxRetries: 3
     });
     
     // Create agent map
@@ -345,58 +348,70 @@ const snakeCase = (str: string): string => {
   return str.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`);
 };
 
-// Start server
-const startServer = async () => {
-  try {
-    logger.info('Initializing server...');
-    
-    // Initialize agents and workflows
-    const orchestrator = await initializeAgents();
-    const workflows = initializeWorkflows();
-    
-    // Add orchestrator and workflows to app context
-    app.locals.orchestrator = orchestrator;
-    app.locals.workflows = workflows;
-    
-    // Define routes
-    defineRoutes(orchestrator, workflows);
-    
-    // Start server
-    const port = config.server.port;
-    
-    app.listen(port, '0.0.0.0', () => {
-      logger.info(`Server running on port ${port}`);
-      logger.info(`Environment: ${config.server.nodeEnv}`);
-      logger.info(`OpenAI Model: ${config.openai.model}`);
-    });
-    
-    // Graceful shutdown
-    process.on('SIGTERM', async () => {
-      logger.info('SIGTERM received, shutting down gracefully');
-      
-      // Clean up resources
-      await orchestrator.cleanup();
-      
-      process.exit(0);
-    });
-    
-    process.on('SIGINT', async () => {
-      logger.info('SIGINT received, shutting down gracefully');
-      
-      // Clean up resources
-      await orchestrator.cleanup();
-      
-      process.exit(0);
-    });
-  } catch (error) {
-    logger.error('Failed to start server', { error });
-    process.exit(1);
-  }
-};
+// Change the app creation to be a function that accepts services
+export function createApp(services?: {
+  dbService?: any;
+  biteBaseService?: any;
+}) {
+  const app = express();
+  
+  // Configure middleware
+  app.use(express.json());
+  app.use(cors());
+  
+  // Initialize services
+  const dbService = services?.dbService || null;
+  const biteBaseService = services?.biteBaseService || null;
+  
+  // Initialize agent orchestrator
+  const sentimentAgent = new SentimentAgent({
+    type: AgentType.SENTIMENT,
+    capabilities: [AgentCapability.SENTIMENT_ANALYSIS],
+    priority: PriorityLevel.MEDIUM,
+    enabled: true,
+    model: "gpt-4",
+    temperature: 0.7,
+    maxTokens: 2000,
+    contextWindow: 16000,
+    memoryEnabled: true,
+    usesTools: true,
+    timeout: 30000,
+    maxRetries: 3
+  });
+  
+  // Create orchestrator with default config
+  const orchestratorConfig = {
+    maxRetries: 3,
+    agentTimeout: 5000,
+    cacheEnabled: true,
+    cacheTTL: 3600
+  };
+  const orchestrator = new AgentOrchestrator(orchestratorConfig, new Map());
+  orchestrator.registerAgent(sentimentAgent);
+  
+  // Initialize workflows
+  const customerSupportWorkflow = new CustomerSupportWorkflow();
+  
+  // Store instances in app.locals for middleware access
+  app.locals.orchestrator = orchestrator;
+  app.locals.workflowRegistry = { customerSupport: customerSupportWorkflow };
+  app.locals.dbService = dbService;
+  app.locals.biteBaseService = biteBaseService;
+  
+  // Define routes
+  defineRoutes(orchestrator, { customerSupport: customerSupportWorkflow });
+  
+  return app;
+}
 
-// Start the server if this is the main module
+// Only start the server if this file is run directly
 if (require.main === module) {
-  startServer();
+  const app = createApp();
+  const PORT = process.env.PORT || 3000;
+  
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
 }
 
 export default app; 
