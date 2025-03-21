@@ -4,8 +4,8 @@ compatibility_date = "2024-03-21"
 node_compat = true
 
 workers_dev = true
-account_id = ""  # Your Cloudflare account ID
-zone_id = ""     # Your Cloudflare zone ID if deploying to a custom domain
+account_id = "dc95c232d76cc4df23a5ca452a4046ab"  # Your Cloudflare account ID
+zone_id = "1a5dd610e492ab9a1343bb2be936830d"     # Your Cloudflare zone ID if deploying to a custom domain
 
 [build]
 command = "npm run build"
