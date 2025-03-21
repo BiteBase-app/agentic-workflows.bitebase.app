@@ -1,48 +1,28 @@
 #!/bin/bash
 
-# Deployment script for Agentic Workflow TS
+# Agentic Workflow TypeScript Deployment Script
+# This script builds and deploys the application to Cloudflare Workers
+
+set -e
+
 echo "Starting deployment process..."
 
-# Step 1: Clean previous builds
-echo "Cleaning previous builds..."
-rm -rf dist
-echo "✓ Clean completed"
+# Step 1: Install dependencies
+echo "Installing dependencies..."
+npm install
 
-# Step 2: Run the build process
-echo "Building the project..."
-npm run build
-if [ $? -ne 0 ]; then
-  echo "❌ Build failed. Aborting deployment."
-  exit 1
-fi
-echo "✓ Build completed successfully"
-
-# Step 3: Run tests (skip if using --no-tests flag)
-if [[ "$*" != *"--no-tests"* ]]; then
+# Step 2: Run tests (optional)
+if [ "$1" = "--test" ]; then
   echo "Running tests..."
   npm test
-  if [ $? -ne 0 ]; then
-    echo "⚠️ Some tests failed. Continue with deployment? (y/n)"
-    read continue
-    if [ "$continue" != "y" ]; then
-      echo "Aborting deployment."
-      exit 1
-    fi
-  else
-    echo "✓ All tests passed"
-  fi
-else
-  echo "Skipping tests (--no-tests flag detected)"
 fi
 
-# Step 4: Deploy with Wrangler
-echo "Deploying with Wrangler..."
-npm run deploy
+# Step 3: Build the application
+echo "Building application..."
+npm run build
 
-if [ $? -ne 0 ]; then
-  echo "❌ Deployment failed."
-  exit 1
-fi
+# Step 4: Deploy to Cloudflare Workers
+echo "Deploying to Cloudflare Workers..."
+npx wrangler deploy
 
-echo "✓ Deployment completed successfully!"
-echo "Your application has been deployed." 
+echo "Deployment completed successfully!" 

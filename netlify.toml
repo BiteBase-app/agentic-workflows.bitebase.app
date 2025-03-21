@@ -1,0 +1,16 @@
+[build]
+  command = "npm install && npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+# Handle redirects for SPA
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Deploy Preview settings
+[context.deploy-preview]
+  command = "npm install && npm run build && echo 'Deploy Preview'" 

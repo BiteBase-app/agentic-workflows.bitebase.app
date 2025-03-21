@@ -47,7 +47,9 @@
     "typescript": "^5.8.2",
     "winston": "^3.11.0",
     "zod": "^3.24.2",
-    "pg": "^8.11.3"
+    "pg": "^8.11.3",
+    "pg-connection-string": "^2.7.0",
+    "pg-pool": "^3.8.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250204.0",

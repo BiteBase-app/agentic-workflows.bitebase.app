@@ -1,52 +1,40 @@
-# PowerShell Deployment script for Agentic Workflow TS
-param(
-    [switch]$NoTests
-)
+# Agentic Workflow TypeScript Deployment Script for PowerShell
+# This script builds and deploys the application to Cloudflare Workers
 
 Write-Host "Starting deployment process..." -ForegroundColor Cyan
 
-# Step 1: Clean previous builds
-Write-Host "Cleaning previous builds..." -ForegroundColor Yellow
-if (Test-Path -Path "dist") {
-    Remove-Item -Path "dist" -Recurse -Force
-}
-Write-Host "✓ Clean completed" -ForegroundColor Green
+# Step 1: Install dependencies
+Write-Host "Installing dependencies..." -ForegroundColor Yellow
+npm install
 
-# Step 2: Run the build process
-Write-Host "Building the project..." -ForegroundColor Yellow
-npm run build
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "❌ Build failed. Aborting deployment." -ForegroundColor Red
-    exit 1
-}
-Write-Host "✓ Build completed successfully" -ForegroundColor Green
-
-# Step 3: Run tests (skip if using -NoTests flag)
-if (-not $NoTests) {
+# Step 2: Run tests (optional)
+if ($args -contains "--test") {
     Write-Host "Running tests..." -ForegroundColor Yellow
     npm test
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "⚠️ Some tests failed. Continue with deployment? (y/n)" -ForegroundColor Yellow
+        Write-Host "Some tests failed. Continue anyway? (y/n)" -ForegroundColor Yellow
         $continue = Read-Host
         if ($continue -ne "y") {
-            Write-Host "Aborting deployment." -ForegroundColor Red
+            Write-Host "Deployment aborted." -ForegroundColor Red
             exit 1
         }
-    } else {
-        Write-Host "✓ All tests passed" -ForegroundColor Green
     }
-} else {
-    Write-Host "Skipping tests (-NoTests flag detected)" -ForegroundColor Yellow
 }
 
-# Step 4: Deploy with Wrangler
-Write-Host "Deploying with Wrangler..." -ForegroundColor Yellow
-npm run deploy
-
+# Step 3: Build the application
+Write-Host "Building application..." -ForegroundColor Yellow
+npm run build
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "❌ Deployment failed." -ForegroundColor Red
+    Write-Host "Build failed. Aborting deployment." -ForegroundColor Red
     exit 1
 }
 
-Write-Host "✓ Deployment completed successfully!" -ForegroundColor Green
-Write-Host "Your application has been deployed." -ForegroundColor Cyan 
+# Step 4: Deploy to Cloudflare Workers
+Write-Host "Deploying to Cloudflare Workers..." -ForegroundColor Yellow
+npx wrangler deploy
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Deployment failed." -ForegroundColor Red
+    exit 1
+}
+
+Write-Host "Deployment completed successfully!" -ForegroundColor Green 
