@@ -211,19 +211,58 @@ node ./node_modules/jest/bin/jest.js tests/workflows/workflow.test.ts
 node ./node_modules/jest/bin/jest.js tests/agents
 ```
 
-### Testing Challenges
+### Test Process and Troubleshooting
 
-When running tests, you may encounter TypeScript errors or test failures due to:
+While the build process now works correctly, you may still encounter test failures due to mismatches between test expectations and the current implementation. Here are common fixes:
 
-1. **Type Assertions**: The database service handles various data types that may require explicit type assertions.
-2. **API Changes**: As the codebase evolves, some tests may need updates to match the current implementation.
-3. **Missing Dependencies**: Some tests require mock implementations of external services like OpenAI or BiteBase.
+1. **Agent Configuration Issues**: Tests for agent classes need to provide proper configuration objects that match what the implementation expects:
+   ```typescript
+   // Fix for SentimentAgent test initialization
+   const agentConfig = {
+     // Required configuration properties
+     type: AgentType.SENTIMENT,
+     enabled: true,
+     priority: PriorityLevel.MEDIUM,
+     capabilities: [AgentCapability.SENTIMENT_ANALYSIS],
+     // ... other required properties
+   };
+   const agent = new SentimentAgent(agentConfig);
+   ```
 
-To resolve these issues:
+2. **Missing Agent Methods**: When your tests expect a method that doesn't exist in the agent implementation, either:
+   - Update the test to match the current API
+   - Implement the missing method in your agent class
 
-1. Use TypeScript type assertions when necessary: `variable as Type`
-2. Update test implementations to match current code structure
-3. Ensure all external dependencies are properly mocked
+3. **Mock Service Updates**: For services like BiteBaseService, ensure your mock implementations match the actual interface:
+   ```typescript
+   // Update BiteBase mock to match service implementation 
+   const mockBiteBaseClient: BiteBaseClient = {
+     getApiInfo: jest.fn().mockResolvedValue(/* mock response */),
+     getHealthStatus: jest.fn().mockResolvedValue(/* mock response */),
+     analyzeProject: jest.fn().mockResolvedValue(/* mock response */),
+     getAnalysisStatus: jest.fn().mockResolvedValue(/* mock response */),
+     pollAnalysisUntilComplete: jest.fn().mockResolvedValue(/* mock response */)
+   };
+   ```
+
+4. **Import and Type Issues**: Make sure imports refer to the correct paths and modules:
+   ```typescript
+   // Use correct import paths for types
+   import { AgentType, AgentCapability, PriorityLevel } from '../../src/config/agent-config';
+   ```
+
+5. **Test Expectation Adjustments**: If implementation behavior has changed, update test expectations:
+   ```typescript 
+   // Instead of expecting an exception
+   // await expect(agent.run({ text: '' })).rejects.toThrow();
+   
+   // Update to check for failure status
+   const result = await agent.run({ text: '' });
+   expect(result.success).toBe(false);
+   expect(result).toHaveProperty('error');
+   ```
+
+The tests will need to be updated as the project evolves to match the current implementation.
 
 ## Getting Started
 
@@ -259,6 +298,40 @@ BITEBASE_API_KEY=your-bitebase-key
 npm run build
 ```
 
+### Build Process
+
+The build process has been optimized to handle issues with external dependencies, particularly the `undici-types` package that can cause TypeScript compilation errors. The build script automatically:
+
+1. **Module Isolation**: Temporarily moves the problematic `undici-types` directory aside during compilation
+2. **TypeScript Compilation**: Runs TypeScript compiler with our custom build configuration
+3. **Module Restoration**: Restores modules after compilation completes
+4. **Type Declaration**: Uses a custom type declaration file that creates empty declarations for all undici modules
+
+This approach allows for a clean build despite conflicts in type definitions from third-party packages, especially when dealing with corrupted or incompatible type definition files.
+
+### Troubleshooting Build Issues
+
+If you encounter build errors:
+
+1. **undici-types errors**: If you see garbled errors from `undici-types` package, the solution is already implemented in our build process. The prebuild/postbuild scripts temporarily rename the directory during compilation.
+
+2. **Type declaration errors**: If you get errors about missing type declarations, check:
+   - The `types` directory contains appropriate declarations
+   - Your `tsconfig.build.json` has the correct `typeRoots` configuration
+   - The `skipLibCheck` option is enabled to prevent errors in node_modules
+
+3. **TypeScript 'unknown' error handling** - Make sure error objects are properly typed or use our helper function to safely access properties:
+   ```typescript
+   function getErrorMessage(error: unknown): string {
+     return error instanceof Error ? error.message : String(error);
+   }
+   ```
+
+4. **Array typing errors** - Explicitly type arrays that will hold promises or other typed values:
+   ```typescript
+   const promises: Promise<void>[] = [];
+   ```
+
 5. Start the server locally
 ```bash
 npm start
@@ -287,8 +360,34 @@ wrangler login
 
 2. Configure your Cloudflare account ID and zone ID in `wrangler.toml` if deploying to a custom domain.
 
-3. Deploy to Cloudflare Workers
+3. Deploy to Cloudflare Workers using one of the following methods:
+
+**Using deployment scripts:**
 ```bash
+# On Linux/macOS:
+./deploy.sh
+
+# On Windows (Command Prompt):
+deploy.cmd
+
+# On Windows (PowerShell):
+.\deploy.ps1
+
+# Skip tests with:
+./deploy.sh --no-tests
+# or
+deploy.cmd --no-tests
+# or
+.\deploy.ps1 -NoTests
+```
+
+**Using npm scripts directly:**
+```bash
+# Clean and build
+npm run clean
+npm run build
+
+# Deploy to Cloudflare
 npm run deploy
 ```
 

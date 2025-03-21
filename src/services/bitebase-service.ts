@@ -54,8 +54,9 @@ export class BiteBaseService {
       
       this.logger.warn('BiteBase client import failed - createBiteBaseClient not found');
       return false;
-    } catch (error) {
-      this.logger.error(`Failed to initialize BiteBase client: ${error.message}`, { error });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Failed to initialize BiteBase client: ${errorMessage}`, { error });
       return false;
     }
   }

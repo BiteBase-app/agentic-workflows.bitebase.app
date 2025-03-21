@@ -8,6 +8,13 @@ import { D1Database } from '@cloudflare/workers-types';
 import logger from '../utils/logger';
 
 /**
+ * Helper function to extract error message safely
+ */
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+/**
  * Database service for interacting with D1
  */
 export class DbService {
@@ -56,8 +63,8 @@ export class DbService {
       ).run();
 
       return meta.last_row_id;
-    } catch (error) {
-      this.logger.error(`Error recording workflow execution: ${error.message}`, { error });
+    } catch (error: unknown) {
+      this.logger.error(`Error recording workflow execution: ${getErrorMessage(error)}`, { error });
       throw error;
     }
   }
@@ -99,8 +106,8 @@ export class DbService {
       ).run();
 
       return meta.last_row_id;
-    } catch (error) {
-      this.logger.error(`Error recording analysis request: ${error.message}`, { error });
+    } catch (error: unknown) {
+      this.logger.error(`Error recording analysis request: ${getErrorMessage(error)}`, { error });
       throw error;
     }
   }
@@ -144,8 +151,8 @@ export class DbService {
       ).run();
 
       return meta.last_row_id;
-    } catch (error) {
-      this.logger.error(`Error recording agent execution: ${error.message}`, { error });
+    } catch (error: unknown) {
+      this.logger.error(`Error recording agent execution: ${getErrorMessage(error)}`, { error });
       throw error;
     }
   }
@@ -179,8 +186,8 @@ export class DbService {
         completedAt,
         id
       ).run();
-    } catch (error) {
-      this.logger.error(`Error updating workflow execution: ${error.message}`, { error });
+    } catch (error: unknown) {
+      this.logger.error(`Error updating workflow execution: ${getErrorMessage(error)}`, { error });
       throw error;
     }
   }
@@ -214,8 +221,8 @@ export class DbService {
         completedAt,
         analysisId
       ).run();
-    } catch (error) {
-      this.logger.error(`Error updating analysis request: ${error.message}`, { error });
+    } catch (error: unknown) {
+      this.logger.error(`Error updating analysis request: ${getErrorMessage(error)}`, { error });
       throw error;
     }
   }
@@ -247,8 +254,8 @@ export class DbService {
       }
 
       return result;
-    } catch (error) {
-      this.logger.error(`Error getting workflow execution: ${error.message}`, { error });
+    } catch (error: unknown) {
+      this.logger.error(`Error getting workflow execution: ${getErrorMessage(error)}`, { error });
       throw error;
     }
   }
@@ -285,8 +292,8 @@ export class DbService {
       }
 
       return result;
-    } catch (error) {
-      this.logger.error(`Error getting analysis request: ${error.message}`, { error });
+    } catch (error: unknown) {
+      this.logger.error(`Error getting analysis request: ${getErrorMessage(error)}`, { error });
       throw error;
     }
   }
@@ -297,7 +304,7 @@ export class DbService {
   async getAgentExecutions(options: { workflowExecutionId?: number, analysisRequestId?: number }): Promise<any[]> {
     try {
       let query = `SELECT * FROM agent_executions WHERE `;
-      let bindValues = [];
+      let bindValues: any[] = [];
       
       if (options.workflowExecutionId) {
         query += `workflow_execution_id = ?`;
@@ -324,8 +331,8 @@ export class DbService {
         
         return result;
       });
-    } catch (error) {
-      this.logger.error(`Error getting agent executions: ${error.message}`, { error });
+    } catch (error: unknown) {
+      this.logger.error(`Error getting agent executions: ${getErrorMessage(error)}`, { error });
       throw error;
     }
   }

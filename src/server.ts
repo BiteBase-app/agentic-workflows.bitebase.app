@@ -9,7 +9,7 @@ import { SentimentAgent } from './agents/sentiment-agent';
 import { AgentOrchestrator } from './orchestration/orchestrator';
 import { CustomerSupportWorkflow } from './workflows/workflow';
 import path from 'path';
-import app from './app';
+import appModule from './app';
 
 // Type definitions for Express route handlers
 type RouteHandler = (req: express.Request, res: express.Response, next?: express.NextFunction) => void | Promise<any>;

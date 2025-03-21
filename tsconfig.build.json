@@ -1,0 +1,23 @@
+{
+  "extends": "./tsconfig.json",
+  "exclude": [
+    "node_modules",
+    "tests",
+    "**/*.test.ts",
+    "**/*-tests.ts"
+  ],
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "strict": true,
+    "typeRoots": [
+      "./node_modules/@types",
+      "./types"
+    ],
+    "types": [
+      "node",
+      "express",
+      "cors",
+      "jest"
+    ]
+  }
+} 

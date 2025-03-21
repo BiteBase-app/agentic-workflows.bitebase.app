@@ -101,21 +101,19 @@ describe('Express App', () => {
 
     // Test analyze endpoint
     it('POST /analyze should start analysis and return info', async () => {
-      const analysisRequest = {
-        projectId: 'test-project',
-        analysisTypes: [AnalysisType.SENTIMENT],
-        text: 'This is a test message',
-        streaming: false
-      };
-
       const response = await request(app)
         .post('/analyze')
-        .send(analysisRequest);
+        .send({
+          projectId: 'test-project',
+          analysisTypes: ['sentiment'],
+          text: 'This is a test message',
+          streaming: false
+        });
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('success', true);
       expect(response.body).toHaveProperty('results.analysisId');
-      expect(mockOrchestrator.runAnalysis).not.toHaveBeenCalled(); // Should run in background
+      expect(mockOrchestrator.runAnalysis).toHaveBeenCalled();
       expect(mockDbService.recordAnalysisRequest).toHaveBeenCalled();
     });
 

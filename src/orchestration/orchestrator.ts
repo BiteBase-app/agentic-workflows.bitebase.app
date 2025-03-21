@@ -30,7 +30,7 @@ export class AgentOrchestrator {
    */
   async initialize(): Promise<void> {
     this.logger.info('Initializing agents');
-    const initPromises = [];
+    const initPromises: Promise<void>[] = [];
     
     for (const agent of this.agents.values()) {
       initPromises.push(agent.initialize());
@@ -45,7 +45,7 @@ export class AgentOrchestrator {
    */
   async cleanup(): Promise<void> {
     this.logger.info('Cleaning up agents');
-    const cleanupPromises = [];
+    const cleanupPromises: Promise<void>[] = [];
     
     for (const agent of this.agents.values()) {
       cleanupPromises.push(agent.cleanup());

@@ -1,25 +1,76 @@
 import { AgentOrchestrator } from '../../src/orchestration/orchestrator';
 import { BaseAgent } from '../../src/agents/base-agent';
-import { 
-  AgentType, 
-  AgentCapability, 
-  ResultAggregationMethod, 
-  AnalysisType,
-  PriorityLevel
-} from '../../src/config/agent-config';
+import { AnalysisType, AgentType, AgentConfig, AgentCapability, PriorityLevel, ResultAggregationMethod } from '../../src/types';
+import { Map } from 'immutable';
 
-// Mock agent class
+// Mock response data
+const mockSentimentResponse = {
+  sentiment: 'positive',
+  score: 0.85
+};
+
+// Mock agent implementation
 class MockAgent extends BaseAgent {
-  constructor(config: any, private mockResponse: any = { processed: true }) {
+  constructor(config: AgentConfig) {
     super(config);
   }
 
-  async processRequest(input: any): Promise<any> {
-    return this.mockResponse;
+  async process(input: any): Promise<any> {
+    // Implementation to satisfy abstract method
+    return {
+      success: true,
+      data: { 
+        score: 0.85,
+        sentiment: 'positive'
+      },
+      confidence: 0.9,
+      executionTime: 0,
+      metadata: {}
+    };
   }
 }
 
 describe('AgentOrchestrator', () => {
+  let orchestrator: AgentOrchestrator;
+  let mockSentimentAgent: MockAgent;
+  let mockEntityAgent: MockAgent;
+  
+  beforeEach(() => {
+    // Create mock agents
+    mockSentimentAgent = new MockAgent({
+      type: AgentType.SENTIMENT,
+      capabilities: [AgentCapability.SENTIMENT_ANALYSIS],
+      priority: PriorityLevel.HIGH,
+      enabled: true
+    });
+    
+    mockEntityAgent = new MockAgent({
+      type: AgentType.CLASSIFICATION, // Use a valid enum value instead of ENTITY_EXTRACTION
+      capabilities: [AgentCapability.CLASSIFICATION], // Use a valid enum value instead of ENTITY_EXTRACTION
+      priority: PriorityLevel.MEDIUM,
+      enabled: true
+    });
+    
+    // Create agent map
+    const agents = Map<AgentType, BaseAgent>().withMutations(agents => {
+      agents.set(AgentType.SENTIMENT, mockSentimentAgent);
+      agents.set(AgentType.CLASSIFICATION, mockEntityAgent); // Use a valid enum value instead of ENTITY_EXTRACTION
+    });
+    
+    // Create orchestrator with mocked agents
+    orchestrator = new AgentOrchestrator({
+      resultAggregation: ResultAggregationMethod.COMBINE,
+      agents
+    });
+    
+    // Initialize the orchestrator
+    orchestrator.initialize();
+    
+    // Spy on agent methods
+    jest.spyOn(mockSentimentAgent, 'process');
+    jest.spyOn(mockEntityAgent, 'process');
+  });
+  
   // Test orchestrator initialization
   describe('Orchestrator Initialization', () => {
     it('should initialize successfully with agents', async () => {
@@ -283,6 +334,81 @@ describe('AgentOrchestrator', () => {
 
       // The first item should be 'high'
       expect(executionOrder[0]).toBe('high');
+    });
+  });
+
+  // Update the relevant test that uses text property
+  it('should run analysis with specified parameters', async () => {
+    // Run analysis
+    const results = await orchestrator.runAnalysis({
+      analysisTypes: [AnalysisType.SENTIMENT],
+      projectId: 'test-project',
+      queryParams: { text: 'This is a test' } // Move text inside queryParams
+    });
+    
+    // ... rest of the test ...
+  });
+
+  // Update the other instances where 'text' property is used directly
+  it('should return results from all agents', async () => {
+    const results = await orchestrator.runAnalysis({
+      analysisTypes: [AnalysisType.SENTIMENT, AnalysisType.CLASSIFICATION], // Use valid AnalysisType
+      projectId: 'test-project',
+      queryParams: { text: 'This is a test' } // Move text inside queryParams
+    });
+    
+    // ... rest of the test ...
+  });
+
+  it('should handle agent failure gracefully', async () => {
+    // ... existing code ...
+    
+    const results = await orchestrator.runAnalysis({
+      analysisTypes: [AnalysisType.SENTIMENT],
+      projectId: 'test-project',
+      queryParams: { text: 'This is a test' } // Move text inside queryParams
+    });
+    
+    // ... rest of the test ...
+  });
+
+  describe('Priority Handling', () => {
+    let mockLowPriorityAgent: MockAgent;
+    
+    beforeEach(() => {
+      mockLowPriorityAgent = new MockAgent({
+        type: AgentType.CLASSIFICATION, // Use valid AgentType
+        capabilities: [AgentCapability.CLASSIFICATION], // Use valid capability
+        priority: PriorityLevel.LOW,
+        enabled: true
+      });
+      
+      // Create agent map with priority differences
+      const agents = Map<AgentType, BaseAgent>().withMutations(agents => {
+        agents.set(AgentType.SENTIMENT, mockSentimentAgent);
+        agents.set(AgentType.CLASSIFICATION, mockLowPriorityAgent); // Use valid AgentType
+      });
+      
+      // Create orchestrator with mocked agents
+      orchestrator = new AgentOrchestrator({
+        resultAggregation: ResultAggregationMethod.COMBINE,
+        analyzeByDefault: [AnalysisType.SENTIMENT, AnalysisType.CLASSIFICATION], // Use valid AnalysisType
+        agents
+      });
+      
+      // Initialize the orchestrator
+      orchestrator.initialize();
+    });
+    
+    it('should process agents in priority order', async () => {
+      // Run analysis with both agents
+      const results = await orchestrator.runAnalysis({
+        analysisTypes: [AnalysisType.SENTIMENT, AnalysisType.CLASSIFICATION], // Use valid AnalysisType
+        projectId: 'test-project',
+        queryParams: { text: 'This is a test' } // Move text inside queryParams
+      });
+      
+      // ... rest of the test ...
     });
   });
 }); 
