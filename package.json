@@ -60,6 +60,6 @@
     "supertest": "^6.3.4",
     "ts-jest": "^29.2.6",
     "ts-node": "^10.9.2",
-    "wrangler": "^3.107.3"
+    "wrangler": "^4.3.0"
   }
 }
