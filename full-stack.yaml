@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./prototype.bitebase.app
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./prototype.bitebase.app:/app
+      - /app/node_modules
+    environment:
+      - NEXT_PUBLIC_API_URL=/api
+      - NEXT_PUBLIC_BITEBASE_API_URL=http://backend:3001/api
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./agentic-workflows.bitebase.app
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./agentic-workflows.bitebase.app:/app
+      - /app/node_modules
+    environment:
+      - PORT=3001
+      - NODE_ENV=development
+      - CORS_ORIGINS=http://localhost:3000,http://frontend:3000
+
+  database:
+    image: postgres:14
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=bitebase
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+volumes:
+  db-data:

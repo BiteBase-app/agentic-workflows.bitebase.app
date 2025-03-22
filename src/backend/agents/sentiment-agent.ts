@@ -1,5 +1,5 @@
 import { BaseAgent, AgentResult } from './base-agent';
-import { AgentCapability } from '../config/agent-config';
+import { AgentCapability } from '../../config/agent-config';
 
 /**
  * Represents a review source platform
@@ -191,4 +191,4 @@ export class SentimentAgent extends BaseAgent {
       'Consider training staff on customer service best practices'
     ];
   }
-} 
+}

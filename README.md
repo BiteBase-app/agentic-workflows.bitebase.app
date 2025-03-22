@@ -287,10 +287,14 @@ npm install
 3. Configure environment variables by copying `.env.example` to `.env` and setting appropriate values:
 ```
 # Add your OpenAI API key
-OPENAI_API_KEY=your-api-key-here
+OPENAI_API_KEY=your-api-key
 
 # Add your BiteBase API key
 BITEBASE_API_KEY=your-bitebase-key
+
+# Server configuration
+PORT=3001
+NODE_ENV=development
 ```
 
 4. Build the project

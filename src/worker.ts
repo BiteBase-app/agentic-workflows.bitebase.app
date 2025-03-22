@@ -4,7 +4,7 @@ import express from 'express';
 import { config } from './config/environment';
 import logger from './utils/logger';
 import { AgentType, AgentCapability, ResultAggregationMethod, AnalysisType, PriorityLevel } from './config/agent-config';
-import { SentimentAgent } from './agents/sentiment-agent';
+import { SentimentAgent } from './backend/agents/sentiment-agent';
 import { AgentOrchestrator } from './orchestration/orchestrator';
 import { CustomerSupportWorkflow } from './workflows/workflow';
 import app from './app';
@@ -286,4 +286,4 @@ function createFakeRequest(request: Request): express.Request {
   };
   
   return req as express.Request;
-} 
+}

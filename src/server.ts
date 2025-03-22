@@ -3,9 +3,17 @@ import cors from 'cors';
 import { config } from './config/environment';
 import logger from './utils/logger';
 import { AnalysisRequest, AnalysisResponse, AnalysisStatus, ErrorResponse } from './api/models';
-import { AgentType, AgentCapability, ResultAggregationMethod, AnalysisType, PriorityLevel } from './config/agent-config';
-import { BaseAgent } from './agents/base-agent';
-import { SentimentAgent } from './agents/sentiment-agent';
+import { 
+  AgentType, 
+  AgentCapability, 
+  PriorityLevel, 
+  AnalysisType,
+  AgentConfig,
+  OrchestrationConfig,
+  ResultAggregationMethod
+} from './config/agent-config';
+import { BaseAgent } from './backend/agents/base-agent';
+import { SentimentAgent } from './backend/agents/sentiment-agent';
 import { AgentOrchestrator } from './orchestration/orchestrator';
 import { CustomerSupportWorkflow } from './workflows/workflow';
 import path from 'path';
@@ -42,12 +50,12 @@ app.use((req, res, next) => {
 // Request logging middleware
 app.use((req, res, next) => {
   const startTime = Date.now();
-  
+
   res.on('finish', () => {
     const duration = Date.now() - startTime;
     logger.info(`${req.method} ${req.path} ${res.statusCode} - ${duration}ms`);
   });
-  
+
   next();
 });
 
@@ -58,7 +66,7 @@ const analysisStatus = new Map<string, AnalysisStatus>();
 const initializeAgents = async () => {
   try {
     logger.info('Initializing agents');
-    
+
     // Initialize sentiment agent
     const sentimentAgent = new SentimentAgent({
       type: AgentType.SENTIMENT,
@@ -78,24 +86,23 @@ const initializeAgents = async () => {
     // Create agent map
     const agents = new Map<AgentType, any>();
     agents.set(AgentType.SENTIMENT, sentimentAgent);
-    
+
     // Initialize orchestrator
-    const orchestrator = new AgentOrchestrator(
-      {
-        maxConcurrentAgents: config.agent.maxConcurrentAgents,
-        agentTimeout: config.agent.timeout,
-        maxRetries: config.agent.maxRetries,
-        resultAggregation: ResultAggregationMethod.SIMPLE,
-        cacheEnabled: config.cache.enabled,
-        cacheTTL: config.cache.ttl,
-        priorityEnabled: true,
-        analyzeByDefault: [AnalysisType.SENTIMENT],
-      },
-      agents
-    );
-    
+    const orchestratorConfig: Partial<OrchestrationConfig> = {
+      maxConcurrentAgents: 5,
+      agentTimeout: 30000,
+      maxRetries: 3,
+      resultAggregation: ResultAggregationMethod.SIMPLE,
+      cacheEnabled: true,
+      cacheTTL: 3600,
+      priorityEnabled: true,
+      analyzeByDefault: [AnalysisType.SENTIMENT]
+    };
+    const orchestrator = new AgentOrchestrator(orchestratorConfig);
+    orchestrator.registerAgent(sentimentAgent);
+
     await orchestrator.initialize();
-    
+
     return orchestrator;
   } catch (error) {
     logger.error('Failed to initialize agents', { error });
@@ -107,7 +114,7 @@ const initializeAgents = async () => {
 const initializeWorkflows = () => {
   try {
     const customerSupportWorkflow = new CustomerSupportWorkflow();
-    
+
     return {
       customerSupport: customerSupportWorkflow,
     };
@@ -131,10 +138,10 @@ const runAnalysis = async (
       completedTypes: [],
       currentType: request.analysisTypes[0],
     });
-    
+
     // Run analysis
     const result = await orchestrator.runAnalysis(request);
-    
+
     // Update status to completed
     analysisStatus.set(analysisId, {
       status: 'completed',
@@ -144,12 +151,12 @@ const runAnalysis = async (
       results: result.results,
       executionTime: result.executionTime,
     });
-    
+
     // Remove status after 1 hour
     setTimeout(() => {
       analysisStatus.delete(analysisId);
     }, 60 * 60 * 1000);
-    
+
     return result;
   } catch (error: any) {
     // Update status to failed
@@ -160,14 +167,14 @@ const runAnalysis = async (
       currentType: null,
       error: error.message,
     });
-    
+
     logger.error(`Analysis ${analysisId} failed`, { error });
-    
+
     // Remove status after 1 hour
     setTimeout(() => {
       analysisStatus.delete(analysisId);
     }, 60 * 60 * 1000);
-    
+
     throw error;
   }
 };
@@ -212,10 +219,10 @@ const defineRoutes = (orchestrator: AgentOrchestrator, workflows: any) => {
   const analyzeHandler: RouteHandler = async (req, res): Promise<void> => {
     try {
       const request = req.body as AnalysisRequest;
-      
+
       // Generate analysis ID
       const analysisId = `analysis_${Date.now()}_${request.projectId}`;
-      
+
       // Initialize status
       analysisStatus.set(analysisId, {
         status: 'pending',
@@ -223,14 +230,14 @@ const defineRoutes = (orchestrator: AgentOrchestrator, workflows: any) => {
         completedTypes: [],
         currentType: null,
       });
-      
+
       // Start analysis in background
       if (!request.streaming) {
         // Run in background
         runAnalysis(orchestrator, analysisId, request).catch(error => {
           logger.error(`Background analysis failed for ${analysisId}`, { error });
         });
-        
+
         // Return immediate response
         res.json({
           success: true,
@@ -243,14 +250,14 @@ const defineRoutes = (orchestrator: AgentOrchestrator, workflows: any) => {
         } as AnalysisResponse);
         return;
       }
-      
+
       // For streaming, run synchronously
       const result = await runAnalysis(orchestrator, analysisId, request);
-      
+
       res.json(result);
     } catch (error: any) {
       logger.error('Analysis request failed', { error });
-      
+
       res.status(500).json({
         error: error.message,
         code: 'ANALYSIS_FAILED',
@@ -263,9 +270,9 @@ const defineRoutes = (orchestrator: AgentOrchestrator, workflows: any) => {
   // Analysis status endpoint
   const analysisStatusHandler: RouteHandler = (req, res): void => {
     const { analysisId } = req.params;
-    
+
     const status = analysisStatus.get(analysisId);
-    
+
     if (!status) {
       res.status(404).json({
         error: 'Analysis not found',
@@ -274,7 +281,7 @@ const defineRoutes = (orchestrator: AgentOrchestrator, workflows: any) => {
       } as ErrorResponse);
       return;
     }
-    
+
     res.json(status);
   };
   app.get('/analyze/status/:analysisId', analysisStatusHandler);
@@ -284,7 +291,7 @@ const defineRoutes = (orchestrator: AgentOrchestrator, workflows: any) => {
     try {
       const { workflowName } = req.params;
       const workflow = workflows[camelCase(workflowName)];
-      
+
       if (!workflow) {
         res.status(404).json({
           error: `Workflow ${workflowName} not found`,
@@ -293,17 +300,17 @@ const defineRoutes = (orchestrator: AgentOrchestrator, workflows: any) => {
         } as ErrorResponse);
         return;
       }
-      
+
       const result = await workflow.execute({
         workflowInput: req.body,
         orchestrator,
         userId: req.headers['x-user-id'] as string,
       });
-      
+
       res.json(result);
     } catch (error: any) {
       logger.error('Workflow execution failed', { error });
-      
+
       res.status(500).json({
         error: error.message,
         code: 'WORKFLOW_FAILED',
@@ -329,7 +336,7 @@ const defineRoutes = (orchestrator: AgentOrchestrator, workflows: any) => {
   // Error handler
   const errorHandler = (err: Error, req: express.Request, res: express.Response, next: express.NextFunction): void => {
     logger.error('Unhandled error', { error: err });
-    
+
     res.status(500).json({
       error: 'Internal Server Error',
       code: 'SERVER_ERROR',
@@ -354,15 +361,15 @@ export function createApp(services?: {
   biteBaseService?: any;
 }) {
   const app = express();
-  
+
   // Configure middleware
   app.use(express.json());
   app.use(cors());
-  
+
   // Initialize services
   const dbService = services?.dbService || null;
   const biteBaseService = services?.biteBaseService || null;
-  
+
   // Initialize agent orchestrator
   const sentimentAgent = new SentimentAgent({
     type: AgentType.SENTIMENT,
@@ -378,29 +385,32 @@ export function createApp(services?: {
     timeout: 30000,
     maxRetries: 3
   });
-  
-  // Create orchestrator with default config
-  const orchestratorConfig = {
+
+  const orchestratorConfig: Partial<OrchestrationConfig> = {
+    maxConcurrentAgents: 5,
+    agentTimeout: 30000,
     maxRetries: 3,
-    agentTimeout: 5000,
+    resultAggregation: ResultAggregationMethod.SIMPLE,
     cacheEnabled: true,
-    cacheTTL: 3600
+    cacheTTL: 3600,
+    priorityEnabled: true,
+    analyzeByDefault: [AnalysisType.SENTIMENT]
   };
-  const orchestrator = new AgentOrchestrator(orchestratorConfig, new Map());
+  const orchestrator = new AgentOrchestrator(orchestratorConfig);
   orchestrator.registerAgent(sentimentAgent);
-  
+
   // Initialize workflows
   const customerSupportWorkflow = new CustomerSupportWorkflow();
-  
+
   // Store instances in app.locals for middleware access
   app.locals.orchestrator = orchestrator;
   app.locals.workflowRegistry = { customerSupport: customerSupportWorkflow };
   app.locals.dbService = dbService;
   app.locals.biteBaseService = biteBaseService;
-  
+
   // Define routes
   defineRoutes(orchestrator, { customerSupport: customerSupportWorkflow });
-  
+
   return app;
 }
 
@@ -408,10 +418,10 @@ export function createApp(services?: {
 if (require.main === module) {
   const app = createApp();
   const PORT = process.env.PORT || 3000;
-  
+
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
 }
 
-export default app; 
+export default app;

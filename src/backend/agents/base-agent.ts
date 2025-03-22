@@ -1,7 +1,7 @@
-import { AgentConfig, AgentCapability } from '../config/agent-config';
+import { AgentConfig, AgentCapability } from '../../config/agent-config';
 import { OpenAI } from 'openai';
-import { config } from '../config/environment';
-import logger from '../utils/logger';
+import { config } from '../../config/environment';
+import logger from '../../utils/logger';
 
 /**
  * Agent memory model for storing state

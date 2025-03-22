@@ -1,5 +1,5 @@
 import { AgentType, AgentConfig, OrchestrationConfig, ResultAggregationMethod, AnalysisType } from '../config/agent-config';
-import { BaseAgent, AgentResult } from '../agents/base-agent';
+import { BaseAgent, AgentResult } from '../backend/agents/base-agent';
 import { AnalysisRequest, AnalysisResponse } from '../api/models';
 import logger from '../utils/logger';
 
