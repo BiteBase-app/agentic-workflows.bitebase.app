@@ -30,11 +30,16 @@
 
     /* Modules */
     "module": "commonjs",
-    "outDir": "dist",
+    "outDir": "dist/src",
     "rootDir": "",
     // "moduleResolution": "node10",                     /* Specify how TypeScript looks up a file from a given module specifier. */
     // "baseUrl": "./",                                  /* Specify the base directory to resolve non-relative module names. */
-    // "paths": {},                                      /* Specify a set of entries that re-map imports to additional lookup locations. */
+    "baseUrl": "./",
+    "paths": {
+      "./server": ["src/server.ts"],
+      "./services/db-service": ["src/services/db-service.ts"],
+      "./services/bitebase-service": ["src/services/bitebase-service.ts"]
+    },
     // "rootDirs": [],                                   /* Allow multiple folders to be treated as one when resolving modules. */
     // "typeRoots": [],                                  /* Specify multiple folders that act like './node_modules/@types'. */
     // "types": [],                                      /* Specify type package names to be included without being referenced in a source file. */
@@ -121,5 +126,5 @@
     "moduleResolution": "node"
   },
   "include": ["src/**/*", "tests/**/*", "src/server.ts", "src/services/db-service.ts", "src/services/bitebase-service.ts"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules", "dist/src"]
 }

@@ -18,6 +18,12 @@
       "express",
       "cors",
       "jest"
-    ]
+    ],
+    "baseUrl": "./",
+    "paths": {
+      "./server": ["src/server.ts"],
+      "./services/db-service": ["src/services/db-service.ts"],
+      "./services/bitebase-service": ["src/services/bitebase-service.ts"]
+    }
   }
-} 
+}
